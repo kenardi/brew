@@ -47,7 +47,7 @@ begin
   if args.debug? # --debug is interactive
     run_test.call
   else
-    Timeout.timeout(Homebrew::EnvConfig.test_timeout_secs, &run_test)
+    Timeout.timeout(Homebrew::EnvConfig.test_timeout_secs.to_i, &run_test)
   end
 rescue Exception => e # rubocop:disable Lint/RescueException
   error_pipe.puts e.to_json
