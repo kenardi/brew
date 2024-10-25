@@ -134,6 +134,15 @@ RSpec.describe Homebrew::Livecheck do
       end
     end
 
+    let(:f_stable_url_only) do
+      stable_url_s = stable_url
+
+      formula("test_no_checkable_urls") do
+        desc "Test livecheck URL formula with only a stable URL"
+        url stable_url_s
+      end
+    end
+
     let(:r_livecheck_url) { f_livecheck_url.resources.first }
 
     let(:c_livecheck_url) do
@@ -145,6 +154,17 @@ RSpec.describe Homebrew::Livecheck do
           name "Test"
           desc "Test Livecheck URL cask"
           homepage "https://brew.sh"
+        end
+      RUBY
+    end
+
+    let(:c_no_checkable_urls) do
+      Cask::CaskLoader.load(+<<-RUBY)
+        cask "test_no_checkable_urls" do
+          version "0.0.1,2"
+
+          name "Test"
+          desc "Test Livecheck URL cask"
         end
       RUBY
     end
@@ -167,9 +187,22 @@ RSpec.describe Homebrew::Livecheck do
     end
 
     it "returns nil when not given a string or valid symbol" do
+      # Invalid symbol in any context
       expect(livecheck.livecheck_url_to_string(:invalid_symbol, f_livecheck_url)).to be_nil
       expect(livecheck.livecheck_url_to_string(:invalid_symbol, c_livecheck_url)).to be_nil
       expect(livecheck.livecheck_url_to_string(:invalid_symbol, r_livecheck_url)).to be_nil
+
+      # Valid symbol in provided context but referenced URL is not present
+      expect(livecheck.livecheck_url_to_string(:head, f_stable_url_only)).to be_nil
+      expect(livecheck.livecheck_url_to_string(:homepage, f_stable_url_only)).to be_nil
+      expect(livecheck.livecheck_url_to_string(:homepage, c_no_checkable_urls)).to be_nil
+      expect(livecheck.livecheck_url_to_string(:url, c_no_checkable_urls)).to be_nil
+
+      # Valid symbol but not in the provided context
+      expect(livecheck.livecheck_url_to_string(:head, c_livecheck_url)).to be_nil
+      expect(livecheck.livecheck_url_to_string(:homepage, r_livecheck_url)).to be_nil
+      expect(livecheck.livecheck_url_to_string(:stable, c_livecheck_url)).to be_nil
+      expect(livecheck.livecheck_url_to_string(:url, f_livecheck_url)).to be_nil
     end
   end
 
